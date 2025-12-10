@@ -1,115 +1,165 @@
-#include <stdio.h>
 #include "grafos.h"
-#include "dijkstra.h"
-#include "log.h"
 
-void menu() {
-	printf("\n=== SISTEMA GPS ===\n");
-	printf("1. Adicionar Cidade\n");
-	printf("2. Adicionar Estrada\n");
-	printf("3. Listar Cidades e Estradas\n");
-	printf("4. Calcular Menor Rota\n");
-	printf("5. Salvar Dados\n");
-	printf("6. Carregar Dados\n");
-	printf("0. Sair\n");
-	printf("Escolha: ");
+// funcao auxiliar, cria um novo nó de estrada (aresta), recebe o destino e a dist, aloca memória e retorna o ponteiro
+Adj* novoNo (int destino, int dist){
+    Adj* novo = (Adj*) malloc(sizeof(Adj));
+    novo->destino = destino;
+    novo->dist = dist;
+    novo->proximo = NULL;
+    return novo;
 }
 
-int main() {
-	Grafo grafo;
-	inicializarGrafo(&grafo); // prepara a estrutura
+// inicializa o grafo, zerando o contador e o ponteiro
+void inicializarGrafo(Grafo* g) {
+    g->numCidades = 0;
+    for(int i = 0; i < MAX_CIDADES; i++) {
+        g->listaCidades[i].cabeca = NULL; // nenhuma estrada
+        g->listaCidades[i].id = -1;
+    }
+}
 
-	int opcao;
-	char nome1[50], nome2[50];
-	int dist;
-	int alterado = 0;
-	FILE *fp = fopen("sistema.log", "a");
-	char logMsg[100];
+// procura a cidade pelo nome que retorna o seu id
+int buscaCidade(Grafo* g, char* nome){
+    for(int i = 0; i < g->numCidades; i++) {
+        if(strcmp(g->listaCidades[i].nome, nome) == 0) {
+            return i;
+        }
+    }
+    
+    return -1; // caso não encontre a cidade
+}
 
-	carregarDados(&grafo, "dados_gps.txt");
+// adiciona uma nova cidade ao vetor (vertice)
+int addCidade(Grafo* g, char* nome) {
+    if (g->numCidades >= MAX_CIDADES) {
+        printf("Erro: Limite de cidades atingido.\n");
+        return -1;
+    }
+    // verifica se ha duplicidade
+    if (buscaCidade(g, nome) != -1) { 
+        printf("Erro: Cidade ja existe.\n");
+        return -1;
+    }
 
-	do {
-		menu();
-		scanf("%d", &opcao);
+    int id = g->numCidades;
+    strcpy(g->listaCidades[id].nome, nome);
+    g->listaCidades[id].id = id;
+    g->listaCidades[id].cabeca = NULL; // inicializa sem estradas
+    g->numCidades++;
+    return id;
+}
 
-		switch(opcao) {
-		case 1:
-			printf("Nome da cidade: ");
-			scanf("%s", nome1);
-			addCidade(&grafo, nome1);
-			sprintf(logMsg,"Cidade adicionada: %s", nome1);
-			registrarLog(logMsg);
-			alterado = 1;
-			break;
-		case 2:
-			printf("Origem: ");
-			scanf("%s", nome1);
-			printf("Destino: ");
-			scanf("%s", nome2);
-			printf("Distancia (km): ");
-			scanf("%d", &dist);
-			addEstrada(&grafo, nome1, nome2, dist);
-			sprintf(logMsg,"Estrada criada: %s -> %s (%d km)", nome1, nome2, dist);
-			registrarLog(logMsg);
-			alterado = 1;
-			break;
-		case 3:
-			listarCidadesEConexoes(&grafo);
-			sprintf(logMsg,"Listagem de cidades e estradas exibida!");
-			registrarLog(logMsg);
-			break;
-		case 4:
-			printf("Ponto de Partida: ");
-			scanf("%s", nome1);
-			printf("Destino Final: ");
-			scanf("%s", nome2);
-			dijkstra(&grafo, nome1, nome2);
-			sprintf(logMsg,"Menor rota calculada: %s -> %s", nome1, nome2);
-			registrarLog(logMsg);
-			break;
-		case 5:
-			salvarDados(&grafo, "dados_gps.txt");
-			
-			sprintf(logMsg,"Dados Salvos!");
-			registrarLog(logMsg);
-			alterado = 0;
-			break;
-		case 6:
-			carregarDados(&grafo, "dados_gps.txt");
-			sprintf(logMsg,"Dados Carregados!");
-			registrarLog(logMsg);
-			break;
-		case 0:
-			if (alterado == 1) {
-				int escolha;
-				printf("\nVocê tem alteracões não salvas!\n");
-				printf("1. Salvar e sair\n");
-				printf("2. Sair sem salvar\n");
-				printf("Escolha: ");
-				scanf("%d", &escolha);
+// adciona uma estrada (aresta) entre duas cidades
+// como é um grafo NÃO DIRECIONADO (estrada de mão dupla), criamos a conexão de A->B e também de B->A
+void addEstrada(Grafo* g, char* origemStr, char* destinoStr, int distancia) {
+    int u = buscaCidade(g, origemStr); 
+    int v = buscaCidade(g, destinoStr);
 
-				if (escolha == 1) {
-					salvarDados(&grafo, "dados_gps.txt");
-					sprintf(logMsg,"Dados salvos!");
-					registrarLog(logMsg);
-					printf("Dados salvos. Encerrando...\n");
-				} else {
-				    
-					sprintf(logMsg,"Encerrado sem salvar!\n");
-					registrarLog(logMsg);
-					printf("Encerrando sem salvar...\n");
-				}
-			} else {
-			    sprintf(logMsg,"Encerrado...\n");
-					registrarLog(logMsg);
-				printf("Encerrando...\n");
-			}
-			break;
-		default:
-			printf("Opcao invalida!\n");
-		}
-	} while (opcao != 0);
+    if (u == -1 || v == -1) {
+        printf("Erro: Uma ou ambas as cidades nao foram encontradas.\n");
+        return;
+    }
 
-	liberarMemoria(&grafo);
-	return 0;
+    // adiciona aresta na lista de 'u' (origem -> destino)
+    Adj* novo = novoNo(v, distancia);
+    // inserção no início da lista encadeada (mais rápido: O(1))
+    novo->proximo = g->listaCidades[u].cabeca;
+    g->listaCidades[u].cabeca = novo;
+
+    // adiciona aresta na lista de 'v' (destino -> origem) - reciprocidade
+    novo = novoNo(u, distancia);
+    novo->proximo = g->listaCidades[v].cabeca;
+    g->listaCidades[v].cabeca = novo;
+
+    printf("Estrada adicionada: %s <--> %s (%d km)\n", origemStr, destinoStr, distancia);
+}
+
+void listarCidadesEConexoes(Grafo* g) {
+    printf("\n--- Mapa de Rotas ---\n");
+    for (int i = 0; i < g->numCidades; i++) {
+        Adj* temp = g->listaCidades[i].cabeca; 
+        printf("Cidade: %s\n", g->listaCidades[i].nome);
+        while (temp) {
+            printf("  -> Conecta com %s (%d km)\n", g->listaCidades[temp->destino].nome, temp->dist);
+            temp = temp->proximo;
+        }
+    }
+}
+
+// salva a estrutura do grafo em um arquivo de texto
+void salvarDados(Grafo* g, const char* nomeArquivo) {
+    FILE* file = fopen(nomeArquivo, "w");
+    if (!file) {
+        printf("Erro ao abrir arquivo para salvar.\n");
+        return;
+    }
+
+    // número de Cidades -> Lista de Nomes -> Lista de Conexões
+    fprintf(file, "%d\n", g->numCidades);
+
+    for (int i = 0; i < g->numCidades; i++) {
+        fprintf(file, "%s\n", g->listaCidades[i].nome);
+    }
+
+    for (int i = 0; i < g->numCidades; i++) {
+        Adj* temp = g->listaCidades[i].cabeca; 
+        while (temp) {
+            // salva apenas se ID origem < ID destino para não duplicar no arquivo
+            // salva (0, 1) mas não salva (1, 0)
+            if (i < temp->destino) {
+                fprintf(file, "%d %d %d\n", i, temp->destino, temp->dist);
+            }
+            temp = temp->proximo;
+        }
+    }
+
+    fclose(file);
+    printf("Dados salvos em '%s'.\n", nomeArquivo);
+}
+
+void carregarDados(Grafo* g, const char* nomeArquivo) {
+    FILE* file = fopen(nomeArquivo, "r");
+    if (!file) {
+        printf("Arquivo nao encontrado. Iniciando novo grafo.\n");
+        return;
+    }
+
+    inicializarGrafo(g);
+    int numCidadesArq;
+    if (fscanf(file, "%d", &numCidadesArq) != 1) return;
+
+    // recupera nomes
+    char nomeBuffer[50];
+    for (int i = 0; i < numCidadesArq; i++) {
+        fscanf(file, "%s", nomeBuffer);
+        addCidade(g, nomeBuffer); 
+    }
+
+    // recupera conexões
+    int u, v, dist;
+    while (fscanf(file, "%d %d %d", &u, &v, &dist) == 3) {
+        // reconstrói as listas de adjacência manualmente (rápido)
+        Adj* novo = novoNo(v, dist); 
+        novo->proximo = g->listaCidades[u].cabeca;
+        g->listaCidades[u].cabeca = novo;
+
+        novo = novoNo(u, dist);
+        novo->proximo = g->listaCidades[v].cabeca;
+        g->listaCidades[v].cabeca = novo;
+    }
+
+    fclose(file);
+    printf("Dados carregados com sucesso!\n");
+}
+
+void liberarMemoria(Grafo* g) {
+    for (int i = 0; i < g->numCidades; i++) {
+        Adj* temp = g->listaCidades[i].cabeca; 
+        while (temp) {
+            Adj* prox = temp->proximo;
+            free(temp); // libera cada nó da lista encadeada
+            temp = prox;
+        }
+        g->listaCidades[i].cabeca = NULL;
+    }
 }
