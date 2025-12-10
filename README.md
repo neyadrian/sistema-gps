@@ -2,7 +2,6 @@
 
 ![C](https://img.shields.io/badge/language-C-blue.svg)
 ![Status](https://img.shields.io/badge/status-Finalizado-success.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 Um sistema de navegação via terminal desenvolvido em C que utiliza **Grafos** e o **Algoritmo de Dijkstra** para calcular a rota mais curta entre cidades.
 
