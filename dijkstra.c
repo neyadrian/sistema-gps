@@ -3,9 +3,9 @@
 // algoritimo de dijkstra
 // calcula o caminho da origem ao destino
 // usa um vetor de distâncias e um vetor 'anterior' para reconstruir a rota
-void dijkstra(Grafo* g, char* origemStr, char* destinoStr) {
-    int inicio = buscaCidade(g, origemStr); 
-    int fim = buscaCidade(g, destinoStr);  
+void dijkstra(Grafo* g, char* origem, char* destino) {
+    int inicio = buscaCidade(g, origem); 
+    int fim = buscaCidade(g, destino);  
 
     if (inicio == -1 || fim == -1) {
         printf("Cidades invalidas.\n");
@@ -28,30 +28,30 @@ void dijkstra(Grafo* g, char* origemStr, char* destinoStr) {
     // loop principal (processa todas as cidades)
     for (int count = 0; count < g->numCidades - 1; count++) {
         // encontrar a cidade não visitada com a MENOR distância atual
-        int min = INFINITO, u = -1;
+        int min = INFINITO, cidAtual = -1;
 
-        for (int v = 0; v < g->numCidades; v++) {
-            if (visitado[v] == 0 && distancia[v] <= min) {
-                min = distancia[v];
-                u = v;
+        for (int cidVis = 0; cidVis < g->numCidades; cidVis++) {
+            if (visitado[cidVis] == 0 && distancia[cidVis] <= min) {
+                min = distancia[cidVis];
+                cidAtual = cidVis;
             }
         }
 
         // se não houver caminho ou acabarem as conexões
-        if (u == -1 || distancia[u] == INFINITO) break;
+        if (cidAtual == -1 || distancia[cidAtual] == INFINITO) break;
 
-        visitado[u] = 1; // marca cidade 'u' como processada
+        visitado[cidAtual] = 1; // marca cidade 'cidAtual' como processada
 
-        // relaxamento (verifica vizinhos de 'u')
-        Adj* temp = g->listaCidades[u].cabeca; 
+        // relaxamento (verifica vizinhos de 'cidAtual')
+        Adj* temp = g->listaCidades[cidAtual].cabeca; 
         while (temp) {
-            int v = temp->destino;
-            // se achar um caminho mais curto passando por 'u', atualiza
-            if (!visitado[v] && distancia[u] != INFINITO && 
-                distancia[u] + temp->dist < distancia[v]) {
+            int cidViz = temp->destino;
+            // se achar um caminho mais curto passando por 'cidAtual', atualiza
+            if (!visitado[cidViz] && distancia[cidAtual] != INFINITO && 
+                distancia[cidAtual] + temp->dist < distancia[cidViz]) {
                 
-                distancia[v] = distancia[u] + temp->dist; // nova menor distância
-                anterior[v] = u; // salva que viemos de 'u'
+                distancia[cidViz] = distancia[cidAtual] + temp->dist; // nova menor distância
+                anterior[cidViz] = cidAtual; // salva que viemos de 'cidAtual'
             }
             temp = temp->proximo;
         }
@@ -59,7 +59,7 @@ void dijkstra(Grafo* g, char* origemStr, char* destinoStr) {
 
     // exibe resultado
     if (distancia[fim] == INFINITO) {
-        printf("\nNao ha caminho entre %s e %s.\n", origemStr, destinoStr);
+        printf("\nNao ha caminho entre %s e %s.\n", origem, destino);
     } else {
         printf("\n--- Melhor Rota Encontrada ---\n");
         printf("Custo Total: %d km\n", distancia[fim]);
@@ -68,10 +68,10 @@ void dijkstra(Grafo* g, char* origemStr, char* destinoStr) {
         // reconstrói o caminho de trás para frente usando o vetor 'anterior'
         int caminho[MAX_CIDADES];
         int cont = 0;
-        int curr = fim;
-        while (curr != -1) {
-            caminho[cont++] = curr;
-            curr = anterior[curr];
+        int atual = fim;
+        while (atual != -1) {
+            caminho[cont++] = atual;
+            atual = anterior[atual];
         }
 
         // imprimir do início ao fim
