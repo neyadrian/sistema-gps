@@ -82,7 +82,7 @@ int main() {
 		case 0:
 			if (alterado == 1) {
 				int escolha;
-				printf("\nVocê tem alteracões não salvas!\n");
+				printf("\nVoce tem alteracoes nao salvas:\n");
 				printf("1. Salvar e sair\n");
 				printf("2. Sair sem salvar\n");
 				printf("Escolha: ");
