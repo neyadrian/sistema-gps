@@ -51,27 +51,27 @@ int addCidade(Grafo* g, char* nome) {
 
 // adciona uma estrada (aresta) entre duas cidades
 // como é um grafo NÃO DIRECIONADO (estrada de mão dupla), criamos a conexão de A->B e também de B->A
-void addEstrada(Grafo* g, char* origemStr, char* destinoStr, int distancia) {
-    int u = buscaCidade(g, origemStr); 
-    int v = buscaCidade(g, destinoStr);
+void addEstrada(Grafo* g, char* origem, char* destino, int distancia) {
+    int org = buscaCidade(g, origem); 
+    int dest = buscaCidade(g, destino);
 
-    if (u == -1 || v == -1) {
+    if (org == -1 || dest == -1) {
         printf("Erro: Uma ou ambas as cidades nao foram encontradas.\n");
         return;
     }
 
-    // adiciona aresta na lista de 'u' (origem -> destino)
-    Adj* novo = novoNo(v, distancia);
-    // inserção no início da lista encadeada (mais rápido: O(1))
-    novo->proximo = g->listaCidades[u].cabeca;
-    g->listaCidades[u].cabeca = novo;
+    // adiciona aresta na lista de 'org' (origem -> destino)
+    Adj* novo = novoNo(dest, distancia);
+    // inserção no início da lista encadeada
+    novo->proximo = g->listaCidades[org].cabeca;
+    g->listaCidades[org].cabeca = novo;
 
-    // adiciona aresta na lista de 'v' (destino -> origem) - reciprocidade
-    novo = novoNo(u, distancia);
-    novo->proximo = g->listaCidades[v].cabeca;
-    g->listaCidades[v].cabeca = novo;
+    // adiciona aresta na lista de 'dest' (destino -> origem) - reciprocidade
+    novo = novoNo(org, distancia);
+    novo->proximo = g->listaCidades[dest].cabeca;
+    g->listaCidades[dest].cabeca = novo;
 
-    printf("Estrada adicionada: %s <--> %s (%d km)\n", origemStr, destinoStr, distancia);
+    printf("Estrada adicionada: %s <--> %s (%d km)\n", origem, destino, distancia);
 }
 
 void listarCidadesEConexoes(Grafo* g) {
@@ -138,7 +138,7 @@ void carregarDados(Grafo* g, const char* nomeArquivo) {
     // recupera conexões
     int u, v, dist;
     while (fscanf(file, "%d %d %d", &u, &v, &dist) == 3) {
-        // reconstrói as listas de adjacência manualmente (rápido)
+        // reconstrói as listas de adjacência manualmente
         Adj* novo = novoNo(v, dist); 
         novo->proximo = g->listaCidades[u].cabeca;
         g->listaCidades[u].cabeca = novo;
