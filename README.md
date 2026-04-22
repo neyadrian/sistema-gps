@@ -49,3 +49,11 @@ O código segue o padrão de modularização com separação de responsabilidade
 ├── 📄 log.h           # Cabeçalho para funções de log
 ├── 📄 dados_gps.txt   # Banco de dados do mapa
 └── 📄 logs.txt        # Histórico de execução gerado automaticamente
+```
+---
+
+## 👨‍💻 Autores
+Ney Adrian e Alex Silva
+
+---
+Projeto desenvolvido para fins acadêmicos.
